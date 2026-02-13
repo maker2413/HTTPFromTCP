@@ -3,7 +3,6 @@ package headers
 import (
 	"bytes"
 	"fmt"
-	"slices"
 	"strings"
 )
 
@@ -16,6 +15,8 @@ func NewHeaders() Headers {
 }
 
 func (h Headers) Parse(data []byte) (n int, done bool, err error) {
+	// print the data with crlf encoding
+
 	idx := bytes.Index(data, []byte(crlf))
 	if idx == -1 {
 		return 0, false, nil
@@ -44,6 +45,13 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 func (h Headers) Set(key, value string) {
 	key = strings.ToLower(key)
+	v, ok := h[key]
+	if ok {
+		value = strings.Join([]string{
+			v,
+			value,
+		}, ", ")
+	}
 	h[key] = value
 }
 
@@ -53,19 +61,12 @@ var tokenChars = []byte{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', 
 // or characters that are allowed in a token
 func validTokens(data []byte) bool {
 	for _, c := range data {
-		if !isTokenChar(c) {
+		if !(c >= 'A' && c <= 'Z' ||
+			c >= 'a' && c <= 'z' ||
+			c >= '0' && c <= '9' ||
+			c == '-') {
 			return false
 		}
 	}
 	return true
-}
-
-func isTokenChar(c byte) bool {
-	if c >= 'A' && c <= 'Z' ||
-		c >= 'a' && c <= 'z' ||
-		c >= '0' && c <= '9' {
-		return true
-	}
-
-	return slices.Contains(tokenChars, c)
 }
